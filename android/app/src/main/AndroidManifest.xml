@@ -21,5 +21,13 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <activity
+    android:name="com.auth0.react.AuthenticationActivity"
+    tools:node="remove"/>
+<!-- Optional: Remove RedirectActivity -->
+    <activity
+    android:name="com.auth0.react.RedirectActivity"
+    tools:node="remove"/>
+
     </application>
 </manifest>
