@@ -64,9 +64,9 @@ Next, we need to copy our the values of the `.env.example` to `.env`:
 cp .env.example .env
 ```
 
-Replace `CLIENT_ID` with the `Client ID` value.
+Replace `AUTH0_CLIENT_ID` with the `Client ID` value.
 
-Next, replace `CLIENT_SECRET` with the `Client Secret` value.
+Next, replace `AUTH0_DOMAIN` with the `Domain` value.
 
 ## Setting up Passwordless Authentication on Auth0
 
@@ -76,11 +76,11 @@ To set up passwordless authentication on Auth0, hover over the "Authentication" 
 
 Click on SMS and input the credentials as shown below. Auth0 uses Twilio so ensure to grab the credentials from the [Twilio Console](console.twilio.com)
 
-![Passwordless connections page](./readme-assets/passwordless-connections.png)
+![Passwordless connections page](./readme-assets/sms-details.png)
 
 Once you've set up your Twilio credentials, nagivate to the "Applications" pane and enable your application as shown below:
 
-![Passwordless connections page](./readme-assets/passwordless-connections-application.png)
+![Passwordless connections page](./readme-assets/sms-details-application.png)
 
 ## Start the project
 
