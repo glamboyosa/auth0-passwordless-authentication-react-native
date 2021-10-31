@@ -13,6 +13,7 @@
     "@tru_id/tru-sdk-react-native": "^0.3.7",
     "react": "17.0.2",
     "react-native": "0.66.1",
+    "react-native-auth0": "^2.10.0",
     "react-native-dotenv": "^3.2.0"
   },
   "devDependencies": {
