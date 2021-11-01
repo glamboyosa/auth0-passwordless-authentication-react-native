@@ -17,6 +17,8 @@ import {
 
 import { auth0 } from './lib/auth0'
 
+const baseURL = 'https://tiny-snail-21.loca.lt'
+
 const createSIMCheck = async (phoneNumber) => {
   const body = { phone_number: phoneNumber }
 
@@ -35,7 +37,6 @@ const createSIMCheck = async (phoneNumber) => {
   return json
 }
 const App = () => {
-  const baseURL = '<YOUR_LOCAL_TUNNEL_URL>'
   const [phoneNumber, setPhoneNumber] = useState('')
   const [code, setCode] = useState('')
   const [otpSent, setOtpSent] = useState(false)
@@ -65,33 +66,33 @@ const App = () => {
 
     console.log('Reachability details are', reachabilityDetails)
 
-    const info = JSON.parse(reachabilityDetails)
+    // const info = JSON.parse(reachabilityDetails)
 
-    if (info.error.status === 400) {
-      errorHandler({
-        title: 'Something went wrong.',
-        message: 'Mobile Operator not supported',
-      })
-      setLoading(false)
-      return
-    }
+    // if (info.error.status === 400) {
+    //   errorHandler({
+    //     title: 'Something went wrong.',
+    //     message: 'Mobile Operator not supported',
+    //   })
+    //   setLoading(false)
+    //   return
+    // }
 
-    let isSIMCheckSupported = false
+    // let isSIMCheckSupported = false
 
-    if (info.error.status !== 412) {
-      isSIMCheckSupported = false
+    // if (info.error.status !== 412) {
+    //   isSIMCheckSupported = false
 
-      for (const { product_name } of info.products) {
-        console.log('supported products are', product_name)
+    //   for (const { product_name } of info.products) {
+    //     console.log('supported products are', product_name)
 
-        if (product_name === 'Sim Check') {
-          isSIMCheckSupported = true
-        }
-      }
-    } else {
-      isSIMCheckSupported = true
-    }
-
+    //     if (product_name === 'Sim Check') {
+    //       isSIMCheckSupported = true
+    //     }
+    //   }
+    // } else {
+    //   isSIMCheckSupported = true
+    // }
+    const isSIMCheckSupported = true
     // If the SIMCheck API is supported, proceed with SIMCheck verification
 
     if (isSIMCheckSupported) {
@@ -158,8 +159,8 @@ const App = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Image style={styles.logo} source={require('./images/tru-logo.png')} />
-        {otpSent ? (
-          <View>
+        {otpSent === false ? (
+          <View style={styles.content}>
             <Text style={styles.heading}>Login</Text>
             <TextInput
               style={styles.textInput}
@@ -172,6 +173,7 @@ const App = () => {
                 setPhoneNumber(value.replace(/\s+/g, ''))
               }
             />
+
             {loading ? (
               <ActivityIndicator
                 style={styles.spinner}
@@ -185,13 +187,13 @@ const App = () => {
             )}
           </View>
         ) : (
-          <View>
+          <View style={styles.content}>
             <Text style={styles.heading}>Enter OTP</Text>
             <TextInput
               style={styles.textInput}
               placeholder="Enter OTP Code"
               placeholderTextColor="#d3d3d3"
-              keyboardType="text"
+              keyboardType="default"
               value={code}
               editable={!loading}
               onChangeText={(value) => setCode(value.replace(/\s+/g, ''))}
