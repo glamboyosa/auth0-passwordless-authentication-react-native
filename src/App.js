@@ -15,11 +15,31 @@ import {
   View,
 } from 'react-native'
 
+import { auth0 } from './lib/auth0'
+
+const createSIMCheck = async (phoneNumber) => {
+  const body = { phone_number: phoneNumber }
+
+  console.log('tru.ID: Creating SIMCheck for', body)
+
+  const response = await fetch(`${baseURL}/sim-check`, {
+    body: JSON.stringify(body),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  const json = await response.json()
+
+  return json
+}
 const App = () => {
   const baseURL = '<YOUR_LOCAL_TUNNEL_URL>'
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [code, setCode] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
-
   const errorHandler = ({ title, message }) => {
     return Alert.alert(title, message, [
       {
@@ -36,24 +56,6 @@ const App = () => {
         onPress: () => console.log('Alert closed'),
       },
     ])
-
-  const createSIMCheck = async (phoneNumber) => {
-    const body = { phone_number: phoneNumber }
-
-    console.log('tru.ID: Creating SIMCheck for', body)
-
-    const response = await fetch(`${baseURL}/sim-check`, {
-      body: JSON.stringify(body),
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    const json = await response.json()
-
-    return json
-  }
 
   const loginHandler = async () => {
     setLoading(true)
@@ -74,53 +76,138 @@ const App = () => {
       return
     }
 
-    let isPhoneCheckSupported = false
+    let isSIMCheckSupported = false
 
     if (info.error.status !== 412) {
-      isPhoneCheckSupported = false
+      isSIMCheckSupported = false
 
       for (const { product_name } of info.products) {
         console.log('supported products are', product_name)
 
         if (product_name === 'Sim Check') {
-          isPhoneCheckSupported = true
+          isSIMCheckSupported = true
         }
       }
     } else {
-      isPhoneCheckSupported = true
+      isSIMCheckSupported = true
     }
 
     // If the SIMCheck API is supported, proceed with SIMCheck verification
 
     if (isSIMCheckSupported) {
+      const data = await createSIMCheck(phoneNumber)
+
+      if (data.no_sim_change === false) {
+        setLoading(false)
+        return errorHandler({
+          title: 'Something went wrong',
+          message: 'SIM changed too recently. Please contact support.',
+        })
+      } else {
+        // SIM hasn't changed within 7 days, proceed with Auth
+        try {
+          await auth0.auth.passwordlessWithSMS({
+            phoneNumber,
+          })
+          setOtpSent(true)
+        } catch (e) {
+          setLoading(false)
+          return errorHandler({
+            title: 'Something went wrong',
+            message: e.message,
+          })
+        }
+      }
     } else {
+      // We don't support SIMCheck so just proceed with Auth0
+      try {
+        await auth0.auth.passwordlessWithSMS({
+          phoneNumber,
+        })
+        setOtpSent(true)
+      } catch (e) {
+        setLoading(false)
+        return errorHandler({
+          title: 'Something went wrong',
+          message: e.message,
+        })
+      }
     }
   }
 
+  const otpHandler = async () => {
+    try {
+      const result = await auth0.auth.loginWithSMS({
+        phoneNumber,
+        code,
+      })
+
+      if (result) {
+        setLoading(false)
+        return successHandler()
+      }
+    } catch (e) {
+      setLoading(false)
+      return errorHandler({
+        title: 'Something went wrong',
+        message: e.message,
+      })
+    }
+  }
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Image style={styles.logo} source={require('./images/tru-logo.png')} />
-        <Text style={styles.heading}>Login</Text>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Number ex. +448023432345"
-          placeholderTextColor="#d3d3d3"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          editable={!loading}
-          onChangeText={(value) => setPhoneNumber(value.replace(/\s+/g, ''))}
-        />
-        {loading ? (
-          <ActivityIndicator
-            style={styles.spinner}
-            size="large"
-            color="#00ff00"
-          />
+        {otpSent ? (
+          <View>
+            <Text style={styles.heading}>Login</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Number ex. +448023432345"
+              placeholderTextColor="#d3d3d3"
+              keyboardType="phone-pad"
+              value={phoneNumber}
+              editable={!loading}
+              onChangeText={(value) =>
+                setPhoneNumber(value.replace(/\s+/g, ''))
+              }
+            />
+            {loading ? (
+              <ActivityIndicator
+                style={styles.spinner}
+                size="large"
+                color="#00ff00"
+              />
+            ) : (
+              <TouchableOpacity onPress={loginHandler} style={styles.button}>
+                <Text style={styles.buttonText}>Login</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         ) : (
-          <TouchableOpacity onPress={loginHandler} style={styles.button}>
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.heading}>Enter OTP</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter OTP Code"
+              placeholderTextColor="#d3d3d3"
+              keyboardType="text"
+              value={code}
+              editable={!loading}
+              onChangeText={(value) => setCode(value.replace(/\s+/g, ''))}
+            />
+            {loading ? (
+              <ActivityIndicator
+                style={styles.spinner}
+                size="large"
+                color="#00ff00"
+              />
+            ) : (
+              <TouchableOpacity onPress={otpHandler} style={styles.button}>
+                <Text style={styles.buttonText}>Submit code</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
     </SafeAreaView>
