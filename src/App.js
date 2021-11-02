@@ -17,7 +17,7 @@ import {
 
 import { auth0 } from './lib/auth0'
 
-const baseURL = 'https://tiny-snail-21.loca.lt'
+const baseURL = '<YOUR_LOCAL_TUNNEL_URL>'
 
 const createSIMCheck = async (phoneNumber) => {
   const body = { phone_number: phoneNumber }
@@ -98,7 +98,7 @@ const App = () => {
     if (isSIMCheckSupported) {
       const data = await createSIMCheck(phoneNumber)
 
-      if (data.no_sim_change === false) {
+      if (data.no_sim_change !== false) {
         setLoading(false)
         return errorHandler({
           title: 'Something went wrong',
@@ -111,7 +111,9 @@ const App = () => {
             phoneNumber,
           })
           setOtpSent(true)
+          setLoading(false)
         } catch (e) {
+          console.log(JSON.stringify(e))
           setLoading(false)
           return errorHandler({
             title: 'Something went wrong',
@@ -126,6 +128,7 @@ const App = () => {
           phoneNumber,
         })
         setOtpSent(true)
+        setLoading(false)
       } catch (e) {
         setLoading(false)
         return errorHandler({
@@ -139,7 +142,7 @@ const App = () => {
   const otpHandler = async () => {
     try {
       const result = await auth0.auth.loginWithSMS({
-        phoneNumber,
+        phoneNumber: '+447743868561',
         code,
       })
 
@@ -148,6 +151,7 @@ const App = () => {
         return successHandler()
       }
     } catch (e) {
+      console.log(JSON.stringify(e))
       setLoading(false)
       return errorHandler({
         title: 'Something went wrong',
