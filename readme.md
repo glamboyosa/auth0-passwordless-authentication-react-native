@@ -1,4 +1,4 @@
-## Passwordless SIM Based Authentication with **tru.ID** SIMCheck
+## Passwordless SIM Based Authentication with Auth0 React Native **tru.ID** SIMCheck
 
 ## Requirements
 
@@ -68,9 +68,14 @@ Replace `AUTH0_CLIENT_ID` with the `Client ID` value.
 
 Next, replace `AUTH0_DOMAIN` with the `Domain` value.
 
+
 ## Setting up Passwordless Authentication on Auth0
 
-To set up passwordless authentication on Auth0, hover over the "Authentication" icon and click "Passwordless". You should be taken to a screen that looks as follows:
+To set up passwordless authentication on Auth0, first scroll down to "Advanced Settings" > "Grant Types" and select "Passwordless OTP" as shown below. 
+
+![Grant Types](./readme-assets/grant-types.png)
+
+Next, hover over the "Authentication" icon (on the dashboard to your left) and click "Passwordless". You should be taken to a screen that looks as follows:
 
 ![Passwordless connections page](./readme-assets/passwordless-connections.png)
 
