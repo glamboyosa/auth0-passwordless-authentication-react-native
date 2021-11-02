@@ -15,9 +15,8 @@ import {
 
 import { auth0 } from './lib/auth0'
 
+const baseURL = '<YOUR_LOCAL_TUNNEL_URL>'
 const App = () => {
-  const baseURL = '<YOUR_LOCAL_TUNNEL_URL>'
-
   const loginHandler = async () => {}
 
   const otpHandler = async () => {}
