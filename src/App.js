@@ -36,11 +36,13 @@ const createSIMCheck = async (phoneNumber) => {
 
   return json
 }
+
 const App = () => {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [code, setCode] = useState('')
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
+
   const errorHandler = ({ title, message }) => {
     return Alert.alert(title, message, [
       {
@@ -60,46 +62,46 @@ const App = () => {
 
   const loginHandler = async () => {
     setLoading(true)
-    // check if we have coverage using the `isReachable` function
 
+    // check if we have coverage using the `isReachable` function
     const reachabilityDetails = await TruSDK.isReachable()
 
     console.log('Reachability details are', reachabilityDetails)
 
-    // const info = JSON.parse(reachabilityDetails)
+    const info = JSON.parse(reachabilityDetails)
 
-    // if (info.error.status === 400) {
-    //   errorHandler({
-    //     title: 'Something went wrong.',
-    //     message: 'Mobile Operator not supported',
-    //   })
-    //   setLoading(false)
-    //   return
-    // }
+    if (info.error && info.error.status === 400) {
+      errorHandler({
+        title: 'Something went wrong.',
+        message: 'Mobile Operator not supported',
+      })
+      setLoading(false)
+      return
+    }
 
-    // let isSIMCheckSupported = false
+    let isSIMCheckSupported = false
 
-    // if (info.error.status !== 412) {
-    //   isSIMCheckSupported = false
+    if (info.error && info.error.status !== 412) {
+      isSIMCheckSupported = false
 
-    //   for (const { product_name } of info.products) {
-    //     console.log('supported products are', product_name)
+      for (const { product_name } of info.products) {
+        console.log('supported products are', product_name)
 
-    //     if (product_name === 'Sim Check') {
-    //       isSIMCheckSupported = true
-    //     }
-    //   }
-    // } else {
-    //   isSIMCheckSupported = true
-    // }
-    const isSIMCheckSupported = true
+        if (product_name === 'Sim Check') {
+          isSIMCheckSupported = true
+        }
+      }
+    } else {
+      isSIMCheckSupported = true
+    }
+
     // If the SIMCheck API is supported, proceed with SIMCheck verification
-
     if (isSIMCheckSupported) {
       const data = await createSIMCheck(phoneNumber)
 
       if (data.no_sim_change !== false) {
         setLoading(false)
+
         return errorHandler({
           title: 'Something went wrong',
           message: 'SIM changed too recently. Please contact support.',
@@ -110,11 +112,13 @@ const App = () => {
           await auth0.auth.passwordlessWithSMS({
             phoneNumber,
           })
+
           setOtpSent(true)
           setLoading(false)
         } catch (e) {
           console.log(JSON.stringify(e))
           setLoading(false)
+
           return errorHandler({
             title: 'Something went wrong',
             message: e.message,
@@ -127,10 +131,12 @@ const App = () => {
         await auth0.auth.passwordlessWithSMS({
           phoneNumber,
         })
+
         setOtpSent(true)
         setLoading(false)
       } catch (e) {
         setLoading(false)
+
         return errorHandler({
           title: 'Something went wrong',
           message: e.message,
@@ -142,23 +148,26 @@ const App = () => {
   const otpHandler = async () => {
     try {
       const result = await auth0.auth.loginWithSMS({
-        phoneNumber: '+447743868561',
+        phoneNumber: phoneNumber,
         code,
       })
 
       if (result) {
         setLoading(false)
+
         return successHandler()
       }
     } catch (e) {
       console.log(JSON.stringify(e))
       setLoading(false)
+
       return errorHandler({
         title: 'Something went wrong',
         message: e.message,
       })
     }
   }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -219,6 +228,7 @@ const App = () => {
     </SafeAreaView>
   )
 }
+
 const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
