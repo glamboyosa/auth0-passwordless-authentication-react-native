@@ -18,25 +18,7 @@ import {
 import { auth0 } from './lib/auth0'
 import TruSdkReactNative from '@tru_id/tru-sdk-react-native'
 
-const baseURL = 'https://7e221758d7ec.eu.ngrok.io'
-
-const createSIMCheck = async (phoneNumber) => {
-  const body = { phone_number: phoneNumber }
-
-  console.log('tru.ID: Creating SIMCheck for', body)
-
-  const response = await fetch(`${baseURL}/sim-check`, {
-    body: JSON.stringify(body),
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-
-  const json = await response.json()
-
-  return json
-}
+const baseURL = '{YOUR_NGROK_URL}'
 
 const createSIMCheck = async (phoneNumber) => {
   const body = { phone_number: phoneNumber }
