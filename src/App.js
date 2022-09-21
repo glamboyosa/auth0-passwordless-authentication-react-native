@@ -1,7 +1,5 @@
 import React, { useState } from 'react'
 
-import TruSDK from '@tru_id/tru-sdk-react-native'
-
 import {
   ActivityIndicator,
   Alert,
