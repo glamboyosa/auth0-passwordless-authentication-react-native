@@ -1193,10 +1193,10 @@
   "resolved" "https://registry.npmjs.org/@tootallnate/once/-/once-1.1.2.tgz"
   "version" "1.1.2"
 
-"@tru_id/tru-sdk-react-native@^0.3.7":
-  "integrity" "sha512-X81ihMAjiCjUveSJCHaFsM9CJ6NK+4xo5OUcXZE/9/4jQuruykOEO+3/us3SOyMEF1fJcYLsPaKRmXftK0iPGA=="
-  "resolved" "https://registry.npmjs.org/@tru_id/tru-sdk-react-native/-/tru-sdk-react-native-0.3.7.tgz"
-  "version" "0.3.7"
+"@tru_id/tru-sdk-react-native@^1.0.0-preview":
+  "integrity" "sha512-PeiK410GQlik1Y9wPtr63SqWl9mGJnekDEl2h48407UKazGMIf5jSTU/Kb8ewUt4b3sNi4zog38k6P/RslZsmg=="
+  "resolved" "https://registry.npmjs.org/@tru_id/tru-sdk-react-native/-/tru-sdk-react-native-1.0.0-preview.tgz"
+  "version" "1.0.0-preview"
 
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.7":
   "integrity" "sha512-EAEHtisTMM+KaKwfWdC3oyllIqswlznXCIVCt7/oRNrh+DhgT4UEBNC/jlADNjvw7UnfbcdkGQcPVZ1xYiLcrQ=="

@@ -16,8 +16,27 @@ import {
 } from 'react-native'
 
 import { auth0 } from './lib/auth0'
+import TruSdkReactNative from '@tru_id/tru-sdk-react-native'
 
-const baseURL = '<YOUR_LOCAL_TUNNEL_URL>'
+const baseURL = 'https://7e221758d7ec.eu.ngrok.io'
+
+const createSIMCheck = async (phoneNumber) => {
+  const body = { phone_number: phoneNumber }
+
+  console.log('tru.ID: Creating SIMCheck for', body)
+
+  const response = await fetch(`${baseURL}/sim-check`, {
+    body: JSON.stringify(body),
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  const json = await response.json()
+
+  return json
+}
 
 const createSIMCheck = async (phoneNumber) => {
   const body = { phone_number: phoneNumber }
@@ -52,96 +71,115 @@ const App = () => {
     ])
   }
 
-  const successHandler = () =>
+  const successHandler = () => {
     Alert.alert('Login Successful', '✅', [
       {
         text: 'Close',
         onPress: () => console.log('Alert closed'),
       },
     ])
+  }
 
   const loginHandler = async () => {
     setLoading(true)
-
-    // check if we have coverage using the `isReachable` function
-    const reachabilityDetails = await TruSDK.isReachable()
-
-    console.log('Reachability details are', reachabilityDetails)
-
-    const info = JSON.parse(reachabilityDetails)
-
-    if (info.error && info.error.status === 400) {
-      errorHandler({
-        title: 'Something went wrong.',
-        message: 'Mobile Operator not supported',
-      })
-      setLoading(false)
-      return
-    }
-
-    let isSIMCheckSupported = false
-
-    if (info.error && info.error.status !== 412) {
-      isSIMCheckSupported = false
-
-      for (const { product_name } of info.products) {
-        console.log('supported products are', product_name)
-
-        if (product_name === 'Sim Check') {
-          isSIMCheckSupported = true
+  
+    try {
+      const reachabilityResponse = await TruSdkReactNative.openWithDataCellular(
+        'https://eu.api.tru.id/public/coverage/v0.1/device_ip'
+      );
+  
+      console.log(reachabilityResponse);
+      let isMNOSupported = false
+  
+      if ('error' in reachabilityResponse) {
+        errorHandler({
+          title: 'Something went wrong.',
+          message: 'MNO not supported',
+        })
+        setLoading(false)
+  
+        return
+      } else if ('http_status' in reachabilityResponse) {
+        let httpStatus = reachabilityResponse.http_status;
+        if (httpStatus === 200 && reachabilityResponse.response_body !== undefined) {
+          let body = reachabilityResponse.response_body;
+          console.log('product => ' + JSON.stringify(body.products[0]));
+          isMNOSupported = true;
+        } else if (httpStatus === 400 || httpStatus === 412 || reachabilityResponse.response_body !== undefined) {
+          errorHandler({
+            title: 'Something went wrong.',
+            message: 'MNO not supported',
+          })
+          setLoading(false)
+  
+          return
         }
       }
-    } else {
-      isSIMCheckSupported = true
-    }
-
-    // If the SIMCheck API is supported, proceed with SIMCheck verification
-    if (isSIMCheckSupported) {
-      const data = await createSIMCheck(phoneNumber)
-
-      if (data.no_sim_change !== false) {
-        setLoading(false)
-
-        return errorHandler({
-          title: 'Something went wrong',
-          message: 'SIM changed too recently. Please contact support.',
+  
+      let isSimCheckSupported = false
+  
+      if (isMNOSupported === true) {
+        reachabilityResponse.response_body.products.forEach((product) => {
+          console.log('supported products are', product)
+  
+          if (product.product_name === 'Sim Check') {
+            isSimCheckSupported = true
+          }
         })
-      } else {
+      }
+  
+      // If the SIMCheck API is supported, proceed with SIMCheck verification
+      if (isSimCheckSupported) {
         // SIM hasn't changed within 7 days, proceed with Auth
+        const data = await createSIMCheck(phoneNumber)
+
+        console.log(data.no_sim_change);
+        if (data.no_sim_change !== true) {
+          setLoading(false)
+      
+          return errorHandler({
+            title: 'Something went wrong',
+            message: 'SIM changed too recently. Please contact support.',
+          })
+        } else {
+          try {
+            await auth0.auth.passwordlessWithSMS({
+              phoneNumber,
+            })
+    
+            setOtpSent(true)
+            setLoading(false)
+          } catch (e) {
+            console.log(JSON.stringify(e))
+            setLoading(false)
+    
+            return errorHandler({
+              title: 'Something went wrong',
+              message: e.message,
+            })
+          }
+        }
+      } else {
+        // We don't support SIMCheck so just proceed with Auth0
         try {
           await auth0.auth.passwordlessWithSMS({
             phoneNumber,
           })
-
+  
           setOtpSent(true)
           setLoading(false)
         } catch (e) {
-          console.log(JSON.stringify(e))
           setLoading(false)
-
+  
           return errorHandler({
             title: 'Something went wrong',
             message: e.message,
           })
         }
       }
-    } else {
-      // We don't support SIMCheck so just proceed with Auth0
-      try {
-        await auth0.auth.passwordlessWithSMS({
-          phoneNumber,
-        })
-
-        setOtpSent(true)
-        setLoading(false)
-      } catch (e) {
-        setLoading(false)
-
-        return errorHandler({
-          title: 'Something went wrong',
-          message: e.message,
-        })
-      }
+    } catch (e) {
+      setLoading(false)
+      errorHandler({ title: 'Something went wrong', message: e.message })
     }
   }
 
@@ -151,10 +189,9 @@ const App = () => {
         phoneNumber: phoneNumber,
         code,
       })
-
+  
       if (result) {
         setLoading(false)
-
         return successHandler()
       }
     } catch (e) {
@@ -182,11 +219,9 @@ const App = () => {
               keyboardType="phone-pad"
               value={phoneNumber}
               editable={!loading}
-              onChangeText={(value) =>
-                setPhoneNumber(value.replace(/\s+/g, ''))
-              }
+              onChangeText={(value) => setPhoneNumber(value.replace(/\s+/g, ''))}
             />
-
+  
             {loading ? (
               <ActivityIndicator
                 style={styles.spinner}
